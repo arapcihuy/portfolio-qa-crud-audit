@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Warung App — Demo QA</title>
+<style>
+  :root { --line:#d8d8d8; --bg:#fafafa; }
+  * { box-sizing:border-box; }
+  body { font-family:-apple-system,Segoe UI,Roboto,sans-serif; margin:0; background:var(--bg); color:#1c1c1c; }
+  header { background:#1c1c1c; color:#fff; padding:14px 20px; font-size:15px; }
+  header small { opacity:.6; margin-left:8px; }
+  main { max-width:960px; margin:24px auto; padding:0 20px; }
+  section { background:#fff; border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:20px; }
+  h2 { font-size:14px; text-transform:uppercase; letter-spacing:.06em; color:#666; margin:0 0 12px; }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  th,td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); }
+  th { font-size:12px; text-transform:uppercase; color:#777; }
+  tr.minus td { background:#ffecec; }
+  input,button { font:inherit; padding:8px 10px; border:1px solid var(--line); border-radius:6px; }
+  button { background:#1c1c1c; color:#fff; border-color:#1c1c1c; cursor:pointer; }
+  button.ghost { background:#fff; color:#1c1c1c; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .pager { margin-top:12px; display:flex; gap:8px; align-items:center; font-size:13px; }
+  .err { color:#c00; font-size:13px; min-height:18px; }
+  .hint { font-size:12px; color:#888; margin-top:6px; }
+</style>
+</head>
+<body>
+<header>Warung App <small>demo aplikasi dengan bug yang disengaja — untuk portofolio audit QA</small></header>
+<main>
+
+  <section>
+    <h2>Tambah Produk</h2>
+    <form id="form-tambah" class="row">
+      <input id="in-nama" placeholder="Nama produk" />
+      <input id="in-sku" placeholder="SKU" />
+      <input id="in-harga" placeholder="Harga" />
+      <input id="in-stok" placeholder="Stok" />
+      <button type="submit">Simpan</button>
+    </form>
+    <div id="pesan-form" class="err"></div>
+    <div class="hint">Catatan: form ini tidak memberi tahu kalau data gagal tervalidasi.</div>
+  </section>
+
+  <section>
+    <h2>Daftar Produk</h2>
+    <div class="row">
+      <input id="in-cari" placeholder="Cari nama produk" />
+      <button id="btn-cari" class="ghost">Cari</button>
+      <button id="btn-refresh" class="ghost">Muat ulang</button>
+    </div>
+    <div id="pesan-pesan" class="err"></div>
+    <div id="pesan-stok" class="err"></div>
+    <table id="tabel">
+      <thead><tr><th>ID</th><th>Nama</th><th>SKU</th><th>Harga</th><th>Stok</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <div class="pager">
+      <button id="btn-prev" class="ghost">‹ Sebelumnya</button>
+      <span id="info-halaman"></span>
+      <button id="btn-next" class="ghost">Berikutnya ›</button>
+    </div>
+    <div class="hint">Tombol "Beli 1" untuk memperagakan alur pesanan &amp; pengurangan stok.</div>
+  </section>
+
+</main>
+<script>
+let halaman = 1;
+
+async function muat() {
+  const q = document.getElementById('in-cari').value.trim();
+  const r = await fetch(`/api/produk?page=${halaman}&q=${encodeURIComponent(q)}`);
+  const j = await r.json();
+  const tb = document.querySelector('#tabel tbody');
+  tb.innerHTML = '';
+  for (const it of j.data) {
+    const tr = document.createElement('tr');
+    if (it.stok !== null && it.stok < 0) tr.className = 'minus';
+    tr.innerHTML = `<td>${it.id}</td><td class="nm">${it.nama}</td><td>${it.sku}</td>` +
+      `<td class="hg">${it.harga}</td><td class="st">${it.stok}</td>` +
+      `<td><button class="ghost beli" data-id="${it.id}">Beli 1</button> ` +
+      `<button class="ghost hapus" data-id="${it.id}">Hapus</button></td>`;
+    tb.appendChild(tr);
+  }
+  document.getElementById('info-halaman').textContent =
+    `Halaman ${j.page} — total ${j.total} produk`;
+}
+
+document.getElementById('form-tambah').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const body = {
+    nama: document.getElementById('in-nama').value,
+    sku: document.getElementById('in-sku').value,
+    harga: document.getElementById('in-harga').value,
+    stok: document.getElementById('in-stok').value,
+  };
+  const r = await fetch('/api/produk', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+  });
+  // BUG (disengaja): setelah simpan, daftar TIDAK ikut diperbarui.
+  // User mengira gagal simpan, padahal datanya masuk. Harus klik "Muat ulang" manual.
+  if (r.ok) {
+    document.getElementById('form-tambah').reset();
+    document.getElementById('pesan-form').textContent = '';
+  } else {
+    document.getElementById('pesan-form').textContent = 'Gagal menyimpan.';
+  }
+});
+
+document.getElementById('btn-refresh').addEventListener('click', muat);
+document.getElementById('btn-cari').addEventListener('click', () => { halaman = 1; muat(); });
+document.getElementById('btn-prev').addEventListener('click', () => { if (halaman > 1) { halaman--; muat(); } });
+document.getElementById('btn-next').addEventListener('click', () => { halaman++; muat(); });
+
+document.addEventListener('click', async (ev) => {
+  const beli = ev.target.closest('.beli');
+  const hapus = ev.target.closest('.hapus');
+  if (beli) {
+    const r = await fetch('/api/pesanan', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ produkId: Number(beli.dataset.id), qty: 1 }),
+    });
+    const j = await r.json();
+    // BUG (disengaja): kalau stok jadi minus, tidak ada peringatan sama sekali.
+    if (j.stokSekarang !== undefined && j.stokSekarang < 0) {
+      document.getElementById('pesan-stok').textContent =
+        `Stok minus terdeteksi (${j.stokSekarang}) — tidak ada peringatan dari aplikasi.`;
+    } else {
+      document.getElementById('pesan-stok').textContent = '';
+    }
+    muat();
+  }
+  if (hapus) {
+    await fetch(`/api/produk/${hapus.dataset.id}`, { method: 'DELETE' });
+    muat();
+  }
+});
+
+muat();
+</script>
+</body>
+</html>

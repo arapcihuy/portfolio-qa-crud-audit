@@ -1,0 +1,16 @@
+{
+  "name": "portfolio-qa-crud-audit",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sample CRUD functional audit + Playwright E2E suite — portfolio QA",
+  "scripts": {
+    "start": "node demo-app/server.js",
+    "test": "playwright test",
+    "test:ui": "playwright test tests/regresi.spec.js",
+    "test:bugs": "playwright test tests/perilaku-diharapkan.spec.js",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0"
+  }
+}
