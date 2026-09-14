@@ -50,7 +50,7 @@ node demo-app/server.js      # http://127.0.0.1:4173
 ## Kontak
 
 Rasyid Ahmad Fauzi — QA & Test Automation
-Email: arapcihuy@gmail.com
+Email: rasyidahmad180@gmail.com
 LinkedIn: https://linkedin.com/in/rasyid-ahmad-840b8b250
 GitHub: https://github.com/arapcihuy
 Portofolio: https://arapcihuy.github.io
