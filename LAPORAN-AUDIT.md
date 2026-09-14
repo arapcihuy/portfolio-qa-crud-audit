@@ -4,7 +4,7 @@ Auditor: QA & Test Automation
 Tanggal: 14 September 2026
 Objek uji: Warung App v1.0 — aplikasi demo CRUD produk & pesanan (dibuat sendiri untuk portofolio)
 Metode: uji fungsional CRUD (manual + otomasi Playwright), 19 skenario, disusun lewat test case sheet
-Status akhir: **8 temuan** — 3 Prioritas Tinggi, 3 Sedang, 2 Rendah
+Status akhir: **8 temuan** — 4 Prioritas Tinggi, 3 Sedang, 1 Rendah
 
 > Catatan penting: aplikasi ini saya bangun sendiri dan bug-nya saya tanam sengaja.
 > Tujuannya memperagakan cara kerja audit, termasuk bukti mentah dan langkah reproduksi.
